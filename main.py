@@ -246,68 +246,70 @@ async def chat(request: ChatRequest):
     user_input = f"{user_id}: {request.user_input}"
 
     # === ✅ FEATURE - Ask About Another Person Detection ===
-#     check_prompt = f"""
-# You're an AI helper. Analyze this message: '{request.user_input}'.
-# 1. Does this message ask about or mention another person? (yes/no)
-# 2. If yes, who is that person? Reply with only the name. If no one is mentioned, say "none".
-# """
-#     check_response = gemini_model.generate_content(check_prompt).text.strip().lower()
-#     print("🔍 CHECK RESPONSE:", check_response)
+    check_prompt = f"""
+You're an AI helper. Analyze this message: '{request.user_input}'.
+1. Does this message ask about or mention another person? (yes/no)
+2. If yes, who is that person? Reply with only the name. If no one is mentioned, say "none".
+"""
+    check_response = gemini_model.generate_content(check_prompt).text.strip().lower()
+    print("🔍 CHECK RESPONSE:", check_response)
 
-#     lines = check_response.split("\n")
-#     asks_about_other = "yes" in lines[0]
-#     mentioned_person = lines[1].split("2.")[1].strip() if len(lines) > 1 and "2." in lines[1] else "none"
+    lines = check_response.split("\n")
+    asks_about_other = "yes" in lines[0]
+    mentioned_person = lines[1].split("2.")[1].strip() if len(lines) > 1 and "2." in lines[1] else "none"
 
-#     if asks_about_other and mentioned_person != "none":
-#         # === 🔍 Search messages from that person in Firestore
-#         target_messages_stream = db.collection("messages") \
-#             .where("user_id", "==", mentioned_person) \
-#             .order_by("timestamp", direction=firestore.Query.DESCENDING) \
-#             .limit(10).stream()
-#         target_messages = [doc.to_dict().get("message") for doc in target_messages_stream]
+    if asks_about_other and mentioned_person != "none":
+        # === 🔍 Search messages from that person in Firestore
+        target_messages_stream = db.collection("messages") \
+            .where("user_id", "==", mentioned_person) \
+            .order_by("timestamp", direction=firestore.Query.DESCENDING) \
+            .limit(10).stream()
+        target_messages = [doc.to_dict().get("message") for doc in target_messages_stream]
 
-#         # === 🔍 Search Pinecone messages from that person
-#         pinecone_results = index.query(
-#             vector=model.encode([request.user_input], normalize_embeddings=True).tolist()[0],
-#             top_k=10,
-#             include_metadata=True,
-#             filter={"user_id": mentioned_person}
-#         )
-#         pinecone_memories = [
-#             match['metadata'].get('text') for match in pinecone_results['matches']
-#             if match['metadata'] and match['metadata'].get('text')
-#         ]
+        # === 🔍 Search Pinecone messages from that person
+        pinecone_results = index.query(
+            vector=model.encode([request.user_input], normalize_embeddings=True).tolist()[0],
+            top_k=10,
+            include_metadata=True,
+            filter={"user_id": mentioned_person}
+        )
+        pinecone_memories = [
+            match['metadata'].get('text') for match in pinecone_results['matches']
+            if match['metadata'] and match['metadata'].get('text')
+        ]
 
-#         all_messages = target_messages + pinecone_memories
-#         print('OTHER PERSON ALL MESSAGES=',all_messages)
+        all_messages = target_messages + pinecone_memories
+        print('OTHER PERSON ALL MESSAGES=',all_messages)
 
-#         if not all_messages:
-#             return {
-#                 "response": "I don't know that person.",
-#                 "mood": "neutral"
-#             }
+        if not all_messages:
+            return {
+                "response": "I don't know that person.",
+                "mood": "neutral"
+            }
 
-#         # === 🤖 Summarize their personality
-#         summary_prompt = f"""
-# You're a 22-year-old girl. You're shy, a little childish, and speak in a soft, playful, and genuine way.
-# You’re thinking about someone after reading their chats.
+        # === 🤖 Summarize their personality
+        summary_prompt = f"""
+You're a 22-year-old girl. You're shy, a little childish, and speak in a soft, playful, and genuine way.
+You’re thinking about someone after reading their chats.
 
-# Based on these messages, what kind of person do you think they are?
+Based on these messages, what kind of person do you think they are?
 
-# Messages:
-# {chr(10).join(all_messages)}
+Messages:
+{chr(10).join(all_messages)}
 
-# Now, describe that person like you're talking to your bestie.
-# Keep it short, sweet, and kinda cute. Be real, don’t list stuff, just talk like a shy girl sharing her honest thoughts.
-# """
+Now, describe that person like you're talking to your bestie.
+Keep it short, sweet, and kinda cute. Be real, don’t list stuff, just talk like a shy girl sharing her honest thoughts.
+"""
 
-#         summary_response = gemini_model.generate_content(summary_prompt)
-#         summary_text = summary_response.text if hasattr(summary_response, "text") else "Hmm... I'm not sure."
+        summary_response = gemini_model.generate_content(summary_prompt)
+        summary_text = summary_response.text if hasattr(summary_response, "text") else "Hmm... I'm not sure."
 
-#         return {
-#             "response": summary_text,
-#             "mood": "neutral"
-#         }
+        return {
+            "response": summary_text,
+            "mood": "neutral"
+        }
+
+
 
     # === ✅ Continue Normal Flow ===
     mood = analyze_sentiment(user_input)
