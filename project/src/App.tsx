@@ -3,6 +3,7 @@ import { Moon, Sun, Phone, Video, MoreVertical } from 'lucide-react';
 import { ChatWindow } from './components/ChatWindow';
 import { UserNameModal } from './components/UserNameModal';
 import type { Message } from './types';
+import sara from './sara.jpg'
 
 const MOCK_MESSAGES: Message[] = [
   {
@@ -98,9 +99,9 @@ function App() {
             <div className="flex items-center space-x-3 relative">
               <div className="relative">
                 <img
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSL_ZTE2kMJtc8CZj8KE_lRjAA0v1nowyiR1g&s"
+                  src={sara}
                   alt="Sarah"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.5)]"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.5)]"
                 />
                 {/* Online dot */}
                 <span
